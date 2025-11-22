@@ -3,238 +3,958 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About The Creator | CodeComic Lab</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>CodeComic Lab | The Graphic Novel Code Editor</title>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=JetBrains+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fira+Code:wght@400;500&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script>
-        // Shared Config
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        'comic-dark': '#121212',
-                        'comic-gray': '#2d2d2d',
-                        'comic-cyan': '#00f3ff',
-                        'comic-magenta': '#ff00aa',
-                        'comic-yellow': '#ffe600',
-                        'comic-white': '#fcfcfc',
-                    },
-                    fontFamily: {
-                        'comic': ['"Bangers"', 'cursive'],
-                        'body': ['"Comic Neue"', 'cursive'],
-                        'code': ['"JetBrains Mono"', 'monospace'],
-                    },
-                    boxShadow: {
-                        'comic': '5px 5px 0px 0px #000000',
-                        'comic-hover': '2px 2px 0px 0px #000000',
-                        'comic-deep': '8px 8px 0px 0px #000000',
-                    }
-                }
-            }
-        }
-    </script>
-
     <style>
-        /* Shared Styles */
-        ::-webkit-scrollbar { width: 12px; height: 12px; }
-        ::-webkit-scrollbar-track { background: #1a1a1a; border-left: 2px solid black; }
-        ::-webkit-scrollbar-thumb { background: #ff00aa; border: 2px solid black; }
-        ::-webkit-scrollbar-thumb:hover { background: #00f3ff; }
-        
-        .halftone { background-image: radial-gradient(circle, #333 1px, transparent 1px); background-size: 20px 20px; }
-        
-        /* Speech Bubble Tails */
-        .bubble-tail::after {
-            content: ''; position: absolute; bottom: -15px; left: 50px;
-            border-width: 15px 15px 0; border-style: solid; border-color: black transparent; display: block; width: 0;
+        /* --- CSS VARIABLES & THEME --- */
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --primary-yellow: #f4d03f;
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff00ff;
+            --border-color: #000000;
+            --text-white: #ffffff;
+            --text-dark: #000000;
+            
+            --border-thick: 3px solid var(--border-color);
+            --shadow-hard: 5px 5px 0px var(--border-color);
+            --shadow-hard-sm: 3px 3px 0px var(--border-color);
+            
+            --font-comic: 'Bangers', cursive;
+            --font-code: 'Fira Code', monospace;
+            --font-body: 'Roboto', sans-serif;
         }
-        /* Right pointing tail */
-        .bubble-tail-right::after {
-            content: ''; position: absolute; top: 30px; right: -15px;
-            border-width: 15px 0 15px 15px; border-style: solid; border-color: transparent transparent transparent black; display: block; width: 0;
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            /* Halftone pattern effect */
+            background-image: radial-gradient(var(--bg-panel) 15%, transparent 16%), radial-gradient(var(--bg-panel) 15%, transparent 16%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+
+        /* --- UTILITIES --- */
+        .comic-font { font-family: var(--font-comic); letter-spacing: 1px; }
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .grid { display: grid; }
+        .center { display: flex; align-items: center; justify-content: center; }
+        
+        /* --- COMIC COMPONENTS --- */
+        .comic-box {
+            background: var(--bg-panel);
+            border: var(--border-thick);
+            box-shadow: var(--shadow-hard);
+            position: relative;
+        }
+
+        .comic-btn {
+            font-family: var(--font-comic);
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            padding: 0.5rem 1.5rem;
+            border: var(--border-thick);
+            box-shadow: var(--shadow-hard);
+            cursor: pointer;
+            transition: all 0.1s ease;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .comic-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--border-color);
+        }
+
+        .btn-cyan { background-color: var(--accent-cyan); color: var(--text-dark); }
+        .btn-magenta { background-color: var(--accent-magenta); color: var(--text-white); }
+        .btn-yellow { background-color: var(--primary-yellow); color: var(--text-dark); }
+        .btn-white { background-color: white; color: black; }
+
+        .speech-bubble {
+            background: #fff;
+            color: #000;
+            padding: 1rem;
+            border: var(--border-thick);
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            color: var(--primary-yellow);
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+            transform: rotate(-1deg);
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            background: var(--accent-magenta);
+            padding: 0 10px;
+            border: 2px solid black;
+        }
+
+        /* --- NAVBAR --- */
+        nav {
+            background: var(--accent-magenta);
+            border-bottom: var(--border-thick);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-family: var(--font-comic);
+            font-size: 2rem;
+            color: var(--primary-yellow);
+            text-shadow: 3px 3px 0px black;
+            transform: skewX(-5deg);
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 1.5rem;
+            font-family: var(--font-comic);
+            font-size: 1.2rem;
+            text-shadow: 1px 1px 0 black;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary-yellow);
+            text-decoration: underline;
+        }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            text-align: center;
+            padding: 4rem 1rem;
+            background: linear-gradient(180deg, rgba(30,30,30,0.9) 0%, rgba(18,18,18,1) 100%);
+            border-bottom: var(--border-thick);
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            text-shadow: 4px 4px 0px #000;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            background: #000;
+            color: #fff;
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            transform: rotate(1deg);
+        }
+
+        /* --- EDITOR AREA --- */
+        .playground-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .controls-bar {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 1rem;
+            height: 70vh;
+            min-height: 500px;
+        }
+
+        /* Mobile Tabs styling */
+        .mobile-tabs {
+            display: none; /* Shown on mobile */
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            background: #333;
+            border: 2px solid black;
+            color: white;
+            font-family: var(--font-comic);
+            cursor: pointer;
+        }
+        
+        .tab-btn.active {
+            background: var(--primary-yellow);
+            color: black;
+            box-shadow: 2px 2px 0 black;
+            transform: translate(-1px, -1px);
+        }
+
+        /* Code Input Areas */
+        .code-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: 100%;
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            position: relative;
+        }
+
+        .panel-label {
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: white;
+            color: black;
+            border: 2px solid black;
+            padding: 2px 10px;
+            font-family: var(--font-comic);
+            font-size: 1rem;
+            z-index: 10;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+            transform: rotate(-2deg);
+        }
+
+        .input-group textarea {
+            flex: 1;
+            background: #2a2a2a;
+            color: #ccc;
+            border: var(--border-thick);
+            padding: 1.5rem 1rem 1rem; /* Top padding for label */
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            resize: none;
+            outline: none;
+            width: 100%;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+        
+        .input-group textarea:focus {
+            background: #333;
+            border-color: var(--accent-cyan);
+        }
+
+        /* Specific border colors for inputs */
+        .html-group textarea { border-left: 5px solid #e34c26; }
+        .css-group textarea { border-left: 5px solid #264de4; }
+        .js-group textarea { border-left: 5px solid #f0db4f; }
+
+        /* Preview Area */
+        .preview-container {
+            background: white;
+            border: var(--border-thick);
+            box-shadow: var(--shadow-hard);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            background: var(--text-dark);
+            color: white;
+            padding: 0.5rem;
+            font-family: var(--font-comic);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: white;
+        }
+
+        /* --- CONSOLE --- */
+        .console-zone {
+            background: #111;
+            border: var(--border-thick);
+            color: #0f0;
+            font-family: var(--font-code);
+            padding: 1rem;
+            height: 150px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            box-shadow: var(--shadow-hard-sm);
+        }
+
+        .console-header {
+            color: var(--accent-magenta);
+            font-family: var(--font-comic);
+            margin-bottom: 0.5rem;
+            border-bottom: 1px dashed #444;
+            padding-bottom: 0.2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #222; padding-bottom: 2px;}
+        .log-error { color: #ff4444; }
+        .log-warn { color: #ffbb00; }
+
+        /* --- TEMPLATES --- */
+        .templates-section {
+            padding: 3rem 1rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .template-card {
+            padding: 1.5rem;
+            background: var(--bg-panel);
+            transition: transform 0.2s;
+        }
+
+        .template-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .template-card h3 {
+            font-family: var(--font-comic);
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+        }
+        
+        .template-card p {
+            color: #aaa;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* --- DOCS --- */
+        .docs-section {
+            background: var(--accent-cyan);
+            padding: 3rem 1rem;
+            color: black;
+            border-top: var(--border-thick);
+            border-bottom: var(--border-thick);
+        }
+        
+        .docs-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .doc-bubble {
+            background: white;
+            border: 3px solid black;
+            padding: 1.5rem;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            position: relative;
+            box-shadow: 5px 5px 0 rgba(0,0,0,0.2);
+        }
+
+        .doc-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 30px;
+            border-width: 20px 20px 0;
+            border-style: solid;
+            border-color: black transparent;
+            display: block;
+            width: 0;
+        }
+        .doc-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -13px;
+            left: 33px;
+            border-width: 17px 17px 0;
+            border-style: solid;
+            border-color: white transparent;
+            display: block;
+            width: 0;
+            z-index: 1;
+        }
+
+        /* --- ABOUT & FOOTER --- */
+        .about-section {
+            padding: 3rem 1rem;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .mascot {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        footer {
+            background: black;
+            color: white;
+            text-align: center;
+            padding: 3rem 1rem; /* Increased padding for icons */
+            font-family: var(--font-code);
+            font-size: 0.8rem;
+            border-top: var(--border-thick); /* Added top border for separation */
+        }
+        
+        footer a { color: var(--accent-cyan); text-decoration: none; }
+
+        /* --- SOCIAL ICONS --- */
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .social-btn {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-panel);
+            border: var(--border-thick);
+            box-shadow: var(--shadow-hard-sm);
+            color: var(--accent-cyan) !important; /* Override footer a color */
+            font-size: 1.5rem;
+            transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); /* Bouncy effect */
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .social-btn:hover {
+            transform: translate(-4px, -4px) rotate(-3deg);
+            box-shadow: 6px 6px 0px var(--accent-magenta);
+            background: var(--primary-yellow);
+            color: black !important;
+        }
+
+        .social-btn:active {
+            transform: translate(0, 0);
+            box-shadow: 0 0 0 black;
+        }
+
+        /* --- MEDIA QUERIES --- */
+        @media (max-width: 768px) {
+            .editor-grid {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .code-inputs {
+                height: 400px;
+            }
+
+            .mobile-tabs {
+                display: flex;
+            }
+
+            .input-group {
+                display: none; /* Hidden by default on mobile, handled by JS */
+                height: 100%;
+            }
+
+            .input-group.active {
+                display: flex;
+            }
+
+            iframe {
+                height: 400px;
+            }
+            
+            .hero h1 { font-size: 2.5rem; }
+            .controls-bar { justify-content: center; }
         }
     </style>
 </head>
-<body class="bg-comic-dark text-comic-white font-body overflow-x-hidden flex flex-col min-h-screen">
+<body>
 
-    <!-- Mobile Menu Overlay -->
-    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/95 z-[100] hidden flex-col items-center justify-center gap-8 transition-opacity duration-300 opacity-0">
-        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-white text-4xl hover:text-comic-magenta">
-            <i class="fas fa-times"></i>
-        </button>
-        <a href="index.html#editor" onclick="toggleMobileMenu()" class="font-comic text-4xl text-comic-yellow hover:scale-110 transition-transform">EDITOR</a>
-        <a href="index.html#templates" onclick="toggleMobileMenu()" class="font-comic text-4xl text-comic-magenta hover:scale-110 transition-transform">TEMPLATES</a>
-        <a href="about.html" class="font-comic text-4xl text-comic-cyan hover:scale-110 transition-transform">ABOUT</a>
-    </div>
-
-    <!-- Navbar -->
-    <nav class="border-b-4 border-black bg-comic-gray p-4 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2 group">
-                <div class="bg-comic-yellow text-black border-2 border-black p-1 transform -rotate-3 shadow-comic-hover group-hover:rotate-0 transition-transform">
-                    <i class="fas fa-code text-xl"></i>
-                </div>
-                <h1 class="font-comic text-3xl tracking-wide text-white uppercase drop-shadow-[2px_2px_0_#000]">
-                    Code<span class="text-comic-cyan">Comic</span> Lab
-                </h1>
-            </a>
-            
-            <div class="hidden md:flex gap-6 font-bold text-lg items-center">
-                <a href="index.html#editor" class="hover:text-comic-yellow transition-colors cursor-pointer">Editor</a>
-                <a href="index.html#templates" class="hover:text-comic-magenta transition-colors cursor-pointer">Templates</a>
-                <a href="about.html" class="text-comic-cyan underline decoration-2 underline-offset-4 cursor-pointer">About</a>
-            </div>
-            
-            <!-- Mobile Buttons -->
-            <div class="flex md:hidden gap-3 items-center">
-                 <a href="index.html" class="bg-comic-yellow text-black px-3 py-1 font-bold border-2 border-black shadow-comic-hover text-sm">
-                    <i class="fas fa-arrow-left"></i> Editor
-                </a>
-                 <button onclick="toggleMobileMenu()" class="bg-comic-magenta text-white border-2 border-black px-3 py-1 shadow-comic hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold rounded-sm">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
+    <!-- NAVBAR -->
+    <nav>
+        <div class="logo">CodeComic <span style="color:white">Lab</span></div>
+        <div class="nav-links">
+            <a href="#editor">Editor</a>
+            <a href="#templates">Templates</a>
+            <a href="#about">About</a>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="flex-grow relative halftone py-12">
-        <div class="max-w-5xl mx-auto px-4">
+    <!-- HERO SECTION -->
+    <div class="hero">
+        <h1 class="comic-font">Write Code. <br>Watch It Come Alive!</h1>
+        <p>The Graphic Novel Style HTML/CSS/JS Playground</p>
+        <br>
+        <button onclick="scrollToEditor()" class="comic-btn btn-yellow">Start Coding ⚡</button>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="editor" class="playground-container">
+        
+        <!-- Controls -->
+        <div class="controls-bar">
+            <button onclick="runCode()" class="comic-btn btn-cyan">
+                Run Code ▶
+            </button>
+            <button onclick="resetCode()" class="comic-btn btn-white">
+                Reset ↺
+            </button>
+            <button onclick="downloadCode()" class="comic-btn btn-magenta">
+                Download ⇩
+            </button>
+        </div>
+
+        <!-- Mobile Tabs (Visible only on small screens) -->
+        <div class="mobile-tabs">
+            <button class="tab-btn active" onclick="switchTab('html')">HTML</button>
+            <button class="tab-btn" onclick="switchTab('css')">CSS</button>
+            <button class="tab-btn" onclick="switchTab('js')">JS</button>
+            <button class="tab-btn" onclick="switchTab('result')">Result</button>
+        </div>
+
+        <!-- Editor Grid -->
+        <div class="editor-grid">
             
-            <!-- Hero / Intro Header -->
-            <header class="text-center mb-16 relative">
-                <div class="inline-block bg-comic-magenta text-white px-6 py-2 border-4 border-black font-comic text-4xl md:text-6xl shadow-comic-deep transform -rotate-2 z-10 relative">
-                    MEET THE CREATOR
+            <!-- Left Column: Inputs -->
+            <div class="code-inputs" id="inputContainer">
+                
+                <!-- HTML Editor -->
+                <div class="input-group html-group active" id="tab-html">
+                    <div class="panel-label">HTML</div>
+                    <textarea id="htmlCode" placeholder="<!-- Write HTML here -->"></textarea>
                 </div>
-                <div class="mt-6 bg-white text-black border-4 border-black p-6 max-w-3xl mx-auto shadow-comic relative rounded-xl bubble-tail">
-                    <h2 class="font-comic text-3xl mb-2">Hey there <span class="inline-block animate-bounce">👋</span> I’m Girish!</h2>
-                    <p class="text-lg font-bold leading-relaxed">
-                        An engineer, designer, and full-stack creator obsessed with building smart, intuitive tech. 
-                        I run <span class="bg-black text-white px-2 transform skew-x-[-10deg] inline-block mx-1 border border-black">Lade Stack</span>, a space where ideas turn into AI-powered tools and sleek SaaS products.
+
+                <!-- CSS Editor -->
+                <div class="input-group css-group" id="tab-css">
+                    <div class="panel-label">CSS</div>
+                    <textarea id="cssCode" placeholder="/* Style it up */"></textarea>
+                </div>
+
+                <!-- JS Editor -->
+                <div class="input-group js-group" id="tab-js">
+                    <div class="panel-label">JS</div>
+                    <textarea id="jsCode" placeholder="// Make it interactive"></textarea>
+                </div>
+            </div>
+
+            <!-- Right Column: Live Preview -->
+            <div class="preview-container" id="tab-result">
+                <div class="preview-header">
+                    <span>Live Preview</span>
+                    <span>● ● ●</span>
+                </div>
+                <iframe id="previewFrame" title="Result"></iframe>
+            </div>
+
+        </div>
+
+        <!-- Console Section -->
+        <div class="comic-box console-zone">
+            <div class="console-header">
+                <span>> Debug Panel / Console Zone</span>
+                <button onclick="clearConsole()" style="background:none; border:none; color:#666; cursor:pointer;">[Clear]</button>
+            </div>
+            <div id="consoleOutput">
+                <!-- Logs appear here -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TEMPLATES SECTION -->
+    <div id="templates" class="templates-section">
+        <h2 class="section-title">Quick Templates</h2>
+        <div class="grid-cards">
+            <!-- Template 1 -->
+            <div class="comic-box template-card">
+                <h3>The Hero Card</h3>
+                <p>A classic profile card with hover effects and bold borders.</p>
+                <button onclick="loadTemplate('card')" class="comic-btn btn-cyan">Load Code</button>
+            </div>
+            <!-- Template 2 -->
+            <div class="comic-box template-card">
+                <h3>Neon Spinner</h3>
+                <p>CSS animations creating a futuristic loading effect.</p>
+                <button onclick="loadTemplate('spinner')" class="comic-btn btn-magenta">Load Code</button>
+            </div>
+            <!-- Template 3 -->
+            <div class="comic-box template-card">
+                <h3>Simple Game Loop</h3>
+                <p>Canvas setup with a basic animation loop ready for game dev.</p>
+                <button onclick="loadTemplate('game')" class="comic-btn btn-yellow">Load Code</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOCS SECTION -->
+    <div class="docs-section">
+        <div class="docs-container">
+            <h2 class="section-title" style="transform: rotate(1deg); background: white; color:black;">Pro Tips</h2>
+            
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <div class="doc-bubble">
+                    <strong>Tip #1:</strong><br>
+                    Use <code>console.log()</code> in the JS tab! The comic panel below the editor will catch your messages so you can debug like a pro.
+                </div>
+                <div class="doc-bubble">
+                    <strong>Tip #2:</strong><br>
+                    The preview updates only when you hit <strong>RUN CODE</strong>. This prevents crashes while you are typing half-finished loops!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABOUT SECTION -->
+    <div id="about" class="about-section">
+        <span class="mascot">🤖</span>
+        <h2 class="section-title">About Us</h2>
+        
+        <div class="comic-box" style="padding: 2rem; text-align: left; background: white; color: black; max-width: 900px; margin: 0 auto;">
+            <p style="font-size: 1.2rem; margin-bottom: 1rem; font-family: var(--font-comic);"><strong>Hey there 👋</strong></p>
+            
+            <p style="margin-bottom: 1rem; line-height: 1.6;">
+                I’m <strong>Girish</strong> — an engineer, designer, and full-stack creator who's obsessed with building smart, intuitive tech that actually helps people. I run <strong>Lade Stack</strong>, a space where ideas turn into AI-powered tools, sleek SaaS products, and lightning-fast prototypes.
+            </p>
+            <p style="margin-bottom: 2rem; line-height: 1.6;">
+                I move fast, ship faster, and love crafting clean UI/UX that feels effortless. From coding full-stack apps to designing interfaces, building automation systems, setting up cloud infra, or experimenting with the newest AI drops — this is the stuff that fuels me every day.
+            </p>
+
+            <div style="background: var(--bg-dark); padding: 1.5rem; border: 2px solid black; margin-bottom: 2rem; color: white; position: relative; box-shadow: 5px 5px 0 var(--accent-magenta);">
+                <h3 class="comic-font" style="color: var(--accent-cyan); font-size: 1.8rem; margin-bottom: 1rem;">What I Do</h3>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li style="margin-bottom: 0.8rem; display: flex; align-items: flex-start;">
+                        <span style="color: var(--primary-yellow); margin-right: 15px; font-weight: bold;">></span> Build AI-driven dev tools + SaaS products
+                    </li>
+                    <li style="margin-bottom: 0.8rem; display: flex; align-items: flex-start;">
+                        <span style="color: var(--primary-yellow); margin-right: 15px; font-weight: bold;">></span> Design modern, minimal, aesthetic UI/UX
+                    </li>
+                    <li style="margin-bottom: 0.8rem; display: flex; align-items: flex-start;">
+                        <span style="color: var(--primary-yellow); margin-right: 15px; font-weight: bold;">></span> Develop full apps using Python, React, Flutter, Next.js & more
+                    </li>
+                    <li style="margin-bottom: 0.8rem; display: flex; align-items: flex-start;">
+                        <span style="color: var(--primary-yellow); margin-right: 15px; font-weight: bold;">></span> Play with automation, LLMs, agents, and workflows
+                    </li>
+                    <li style="margin-bottom: 0px; display: flex; align-items: flex-start;">
+                        <span style="color: var(--primary-yellow); margin-right: 15px; font-weight: bold;">></span> Explore Supabase, Firebase, GitHub Actions, cloud deployments, and scalable backends
+                    </li>
+                </ul>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div>
+                    <h3 class="comic-font" style="color: var(--accent-magenta); text-shadow: 1px 1px 0 black; font-size: 1.5rem; margin-bottom: 0.5rem;">My Approach</h3>
+                    <p style="line-height: 1.5;">
+                        I’m all about open access, speed, and creativity — giving developers tools that feel powerful, simple, and fun to use. If it automates your grind or elevates your build process, I’m probably already making it better.
                     </p>
                 </div>
-            </header>
-
-            <!-- Grid Layout -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-                
-                <!-- What I Do Panel -->
-                <div class="bg-comic-gray border-4 border-black p-0 shadow-comic-deep flex flex-col h-full group">
-                    <div class="bg-comic-yellow text-black font-comic text-2xl p-3 border-b-4 border-black flex justify-between items-center">
-                        <span>WHAT I DO</span>
-                        <i class="fas fa-tools"></i>
-                    </div>
-                    <div class="p-6 flex-1">
-                        <ul class="space-y-4 text-lg">
-                            <li class="flex items-start gap-3 group-hover:translate-x-1 transition-transform">
-                                <i class="fas fa-robot text-comic-cyan mt-1"></i>
-                                <span>Build <b>AI-driven dev tools</b> + SaaS products</span>
-                            </li>
-                            <li class="flex items-start gap-3 group-hover:translate-x-1 transition-transform delay-75">
-                                <i class="fas fa-palette text-comic-magenta mt-1"></i>
-                                <span>Design modern, <b>minimal, aesthetic UI/UX</b></span>
-                            </li>
-                            <li class="flex items-start gap-3 group-hover:translate-x-1 transition-transform delay-100">
-                                <i class="fas fa-code text-comic-yellow mt-1"></i>
-                                <span>Develop full apps using <b>Python, React, Flutter & Next.js</b></span>
-                            </li>
-                            <li class="flex items-start gap-3 group-hover:translate-x-1 transition-transform delay-150">
-                                <i class="fas fa-server text-green-400 mt-1"></i>
-                                <span>Explore <b>Supabase, Firebase, Cloud infra</b> & scalable backends</span>
-                            </li>
-                        </ul>
-                    </div>
+                <div>
+                    <h3 class="comic-font" style="color: var(--primary-yellow); text-shadow: 1px 1px 0 black; font-size: 1.5rem; margin-bottom: 0.5rem;">Beyond the Code</h3>
+                    <p style="line-height: 1.5;">
+                        When I’m not crafting something new, you’ll catch me vibing to anime, testing fresh AI tools, diving into survival games, or painting terracotta art to reset my brain.
+                    </p>
                 </div>
-
-                <!-- Approach & Philosophy Panel -->
-                <div class="relative">
-                    <div class="absolute -top-6 -right-6 w-20 h-20 bg-comic-cyan rounded-full border-4 border-black z-0 flex items-center justify-center font-comic text-black text-xl rotate-12 shadow-comic">
-                        POW!
-                    </div>
-                    <div class="bg-black border-4 border-white p-8 shadow-comic text-white h-full relative z-10">
-                        <h3 class="font-comic text-3xl text-comic-cyan mb-4 border-b-2 border-gray-700 pb-2">MY APPROACH</h3>
-                        <p class="text-xl mb-6">
-                            I’m all about <span class="text-comic-yellow font-bold">open access, speed, and creativity</span>.
-                        </p>
-                        <div class="bg-white text-black p-4 border-2 border-black shadow-comic-hover italic font-bold text-center transform rotate-1">
-                            "If it automates your grind or elevates your build process, I’m probably already making it better."
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Beyond The Code (Full Width) -->
-            <div class="bg-comic-cyan border-4 border-black p-8 shadow-comic mb-12 transform -rotate-1 hover:rotate-0 transition-transform duration-300">
-                <div class="flex flex-col md:flex-row items-center gap-6">
-                    <div class="bg-black text-white font-comic text-3xl px-4 py-2 border-2 border-white transform rotate-2 whitespace-nowrap">
-                        BEYOND THE CODE
-                    </div>
-                    <div class="text-black font-bold text-lg flex-1 text-center md:text-left">
-                        <p class="mb-4">When I'm not shipping code, you can find me:</p>
-                        <div class="flex flex-wrap justify-center md:justify-start gap-3">
-                            <span class="bg-white border-2 border-black px-3 py-1 shadow-comic-hover flex items-center gap-2">
-                                <i class="fas fa-tv text-purple-600"></i> Vibing to Anime
-                            </span>
-                            <span class="bg-white border-2 border-black px-3 py-1 shadow-comic-hover flex items-center gap-2">
-                                <i class="fas fa-flask text-green-600"></i> Testing AI Tools
-                            </span>
-                            <span class="bg-white border-2 border-black px-3 py-1 shadow-comic-hover flex items-center gap-2">
-                                <i class="fas fa-gamepad text-red-600"></i> Survival Games
-                            </span>
-                            <span class="bg-white border-2 border-black px-3 py-1 shadow-comic-hover flex items-center gap-2">
-                                <i class="fas fa-paint-brush text-orange-600"></i> Painting Terracotta
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-black text-white py-8 border-t-4 border-comic-gray mt-auto">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="font-comic text-xl">
-                CODE<span class="text-comic-yellow">COMIC</span> LAB &copy; 2023
-            </div>
-            <div class="text-sm text-gray-500">
-                Built with <i class="fas fa-heart text-red-500"></i> and Tailwind CSS
-            </div>
-            <div class="flex gap-6 text-2xl">
-                <a href="https://github.com/girishlade111" target="_blank" title="GitHub" class="hover:text-comic-yellow hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fab fa-github"></i></a>
-                <a href="https://www.linkedin.com/in/girish-lade-075bba201/" target="_blank" title="LinkedIn" class="hover:text-comic-cyan hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fab fa-linkedin"></i></a>
-                <a href="https://www.instagram.com/girish_lade_/" target="_blank" title="Instagram" class="hover:text-comic-magenta hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fab fa-instagram"></i></a>
-                <a href="https://codepen.io/Girish-Lade-the-looper" target="_blank" title="CodePen" class="hover:text-white hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fab fa-codepen"></i></a>
-                <a href="mailto:girishlade111@gmail.com" title="Email" class="hover:text-red-400 hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fas fa-envelope"></i></a>
             </div>
         </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="social-links">
+            <a href="https://www.instagram.com/girish_lade_/" target="_blank" class="social-btn" title="Instagram">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/girish-lade-075bba201/" target="_blank" class="social-btn" title="LinkedIn">
+                <i class="fa-brands fa-linkedin-in"></i>
+            </a>
+            <a href="https://github.com/girishlade111" target="_blank" class="social-btn" title="GitHub">
+                <i class="fa-brands fa-github"></i>
+            </a>
+            <a href="https://codepen.io/Girish-Lade-the-looper" target="_blank" class="social-btn" title="CodePen">
+                <i class="fa-brands fa-codepen"></i>
+            </a>
+            <a href="mailto:girishlade111@gmail.com" class="social-btn" title="Email Me">
+                <i class="fa-solid fa-envelope"></i>
+            </a>
+        </div>
+        
+        <p>© 2025 CodeComic Lab. Created by Gemini.</p>
+        <p style="margin-top:0.5rem; opacity: 0.6;">All code runs locally in your browser.</p>
     </footer>
-    
+
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-         // Mobile Menu Logic (Same as index.html for consistency)
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu-overlay');
-            if (menu.classList.contains('hidden')) {
-                menu.classList.remove('hidden');
-                menu.classList.add('flex');
-                setTimeout(() => menu.classList.remove('opacity-0'), 10);
-            } else {
-                menu.classList.add('opacity-0');
-                setTimeout(() => {
-                    menu.classList.add('hidden');
-                    menu.classList.remove('flex');
-                }, 300);
+        // DOM Elements
+        const htmlInput = document.getElementById('htmlCode');
+        const cssInput = document.getElementById('cssCode');
+        const jsInput = document.getElementById('jsCode');
+        const iframe = document.getElementById('previewFrame');
+        const consoleOutput = document.getElementById('consoleOutput');
+
+        // Scroll helper
+        function scrollToEditor() {
+            document.getElementById('editor').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- CORE COMPILER ---
+        function runCode() {
+            const html = htmlInput.value;
+            const css = cssInput.value;
+            const js = jsInput.value;
+
+            // Script to intercept console logs inside the iframe
+            const consoleInterceptor = `
+                <script>
+                    (function() {
+                        const originalLog = console.log;
+                        const originalError = console.error;
+                        const originalWarn = console.warn;
+
+                        function sendToParent(type, args) {
+                            try {
+                                const message = args.map(arg => {
+                                    if (typeof arg === 'object') return JSON.stringify(arg);
+                                    return String(arg);
+                                }).join(' ');
+                                window.parent.postMessage({ type: 'console', level: type, message: message }, '*');
+                            } catch (e) {
+                                // Ignore circular structure errors
+                            }
+                        }
+
+                        console.log = function(...args) {
+                            originalLog.apply(console, args);
+                            sendToParent('log', args);
+                        };
+
+                        console.error = function(...args) {
+                            originalError.apply(console, args);
+                            sendToParent('error', args);
+                        };
+
+                        console.warn = function(...args) {
+                            originalWarn.apply(console, args);
+                            sendToParent('warn', args);
+                        };
+                        
+                        window.onerror = function(msg, url, line) {
+                            sendToParent('error', ['Global Error: ' + msg + ' (Line: ' + line + ')']);
+                        };
+                    })();
+                <\/script>
+            `;
+
+            // Construct the complete document
+            const source = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>${css}</style>
+                    ${consoleInterceptor}
+                </head>
+                <body>
+                    ${html}
+                    <script>${js}<\/script>
+                </body>
+                </html>
+            `;
+
+            // Inject into iframe
+            iframe.srcdoc = source;
+            
+            // Add a temporary flash effect to the iframe border to show update
+            const container = document.querySelector('.preview-container');
+            container.style.boxShadow = "0 0 15px var(--accent-cyan)";
+            setTimeout(() => {
+                container.style.boxShadow = "var(--shadow-hard)";
+            }, 300);
+        }
+
+        // --- CONSOLE HANDLING ---
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'console') {
+                const { level, message } = event.data;
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                
+                const timestamp = new Date().toLocaleTimeString().split(' ')[0];
+                let prefix = `[${timestamp}] `;
+                
+                if (level === 'error') {
+                    div.classList.add('log-error');
+                    prefix += '✖ ';
+                } else if (level === 'warn') {
+                    div.classList.add('log-warn');
+                    prefix += '⚠ ';
+                } else {
+                    prefix += '➜ ';
+                }
+
+                div.innerText = prefix + message;
+                consoleOutput.appendChild(div);
+                
+                // Auto scroll to bottom
+                document.querySelector('.console-zone').scrollTop = document.querySelector('.console-zone').scrollHeight;
+            }
+        });
+
+        function clearConsole() {
+            consoleOutput.innerHTML = '';
+        }
+
+        // --- CONTROLS ---
+        function resetCode() {
+            if(confirm("Clear all editors? This cannot be undone.")) {
+                htmlInput.value = "";
+                cssInput.value = "";
+                jsInput.value = "";
+                iframe.srcdoc = "";
+                clearConsole();
             }
         }
-    </script>
 
+        function downloadCode() {
+            const html = htmlInput.value;
+            const css = cssInput.value;
+            const js = jsInput.value;
+            
+            const content = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'codecomic-project.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- MOBILE TABS ---
+        function switchTab(tabName) {
+            // Only works if mobile-tabs are visible (handled by CSS media query)
+            const tabs = ['html', 'css', 'js', 'result'];
+            
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Logic for Results tab vs Input tabs
+            if (tabName === 'result') {
+                document.getElementById('inputContainer').classList.add('hidden');
+                document.querySelector('.preview-container').classList.remove('hidden');
+            } else {
+                // Show inputs, hide preview (on mobile logic)
+                document.getElementById('inputContainer').classList.remove('hidden');
+                
+                // On desktop, preview is always flexible, on mobile we hide it via CSS if needed
+                // But for the specific "Stacking" requirement, we manipulate specific display properties
+                if(window.innerWidth <= 768) {
+                    document.querySelector('.preview-container').classList.add('hidden');
+                }
+                
+                // Show specific input group
+                document.querySelectorAll('.input-group').forEach(el => el.classList.remove('active'));
+                document.getElementById('tab-' + tabName).classList.add('active');
+            }
+        }
+
+        // Handle window resize to reset display quirks from mobile tabbing
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                document.getElementById('inputContainer').classList.remove('hidden');
+                document.querySelector('.preview-container').classList.remove('hidden');
+                document.querySelectorAll('.input-group').forEach(el => el.style.display = 'flex');
+            } else {
+                // Reset to default HTML tab active
+                document.querySelectorAll('.input-group').forEach(el => el.classList.remove('active'));
+                document.getElementById('tab-html').classList.add('active');
+            }
+        });
+
+        // --- TEMPLATES ---
+        const templates = {
+            card: {
+                html: `<div class="card">\n  <div class="card-img"></div>\n  <h2>Super Coder</h2>\n  <p>Level 99 Web Wizard</p>\n</div>`,
+                css: `.card {\n  border: 3px solid black;\n  width: 200px;\n  padding: 10px;\n  text-align: center;\n  background: white;\n  box-shadow: 5px 5px 0 #000;\n  transition: transform 0.2s;\n}\n\n.card:hover {\n  transform: scale(1.05);\n}\n\n.card-img {\n  width: 100%;\n  height: 100px;\n  background: #00f0ff;\n  border: 2px solid black;\n  margin-bottom: 10px;\n}`,
+                js: `console.log("Card template loaded.");\n\ndocument.querySelector('.card').addEventListener('click', () => {\n  alert('You clicked the card!');\n});`
+            },
+            spinner: {
+                html: `<div class="loader-container">\n  <div class="loader"></div>\n  <p>Loading Awesome...</p>\n</div>`,
+                css: `body { background: #222; color: #fff; font-family: sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; }\n\n.loader {\n  width: 50px;\n  height: 50px;\n  border: 5px solid #333;\n  border-top: 5px solid #00f0ff;\n  border-radius: 50%;\n  animation: spin 1s linear infinite;\n}\n\n@keyframes spin {\n  0% { transform: rotate(0deg); }\n  100% { transform: rotate(360deg); }\n}`,
+                js: `console.log("Animation started.");`
+            },
+            game: {
+                html: `<canvas id="gameCanvas" width="300" height="200"></canvas>\n<p>Use Arrow Keys to Move</p>`,
+                css: `canvas { background: #000; border: 4px solid #fff; box-shadow: 0 0 20px #ff00ff; }`,
+                js: `const canvas = document.getElementById('gameCanvas');\nconst ctx = canvas.getContext('2d');\nlet x = 50, y = 50;\n\nfunction draw() {\n  ctx.clearRect(0, 0, canvas.width, canvas.height);\n  ctx.fillStyle = '#00f0ff';\n  ctx.fillRect(x, y, 20, 20);\n  requestAnimationFrame(draw);\n}\n\ndocument.addEventListener('keydown', (e) => {\n  if(e.key === 'ArrowRight') x += 5;\n  if(e.key === 'ArrowLeft') x -= 5;\n  if(e.key === 'ArrowDown') y += 5;\n  if(e.key === 'ArrowUp') y -= 5;\n});\n\ndraw();\nconsole.log("Game loop running");`
+            }
+        };
+
+        function loadTemplate(name) {
+            const t = templates[name];
+            if(t) {
+                htmlInput.value = t.html;
+                cssInput.value = t.css;
+                jsInput.value = t.js;
+                runCode();
+                scrollToEditor();
+            }
+        }
+
+        // Initialize with default Run
+        window.onload = runCode;
+
+    </script>
 </body>
 </html>
