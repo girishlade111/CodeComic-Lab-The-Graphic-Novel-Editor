@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeComic Lab | The Graphic Novel Editor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=JetBrains+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'comic-dark': '#121212',
+                        'comic-gray': '#2d2d2d',
+                        'comic-cyan': '#00f3ff',
+                        'comic-magenta': '#ff00aa',
+                        'comic-yellow': '#ffe600',
+                        'comic-white': '#fcfcfc',
+                    },
+                    fontFamily: {
+                        'comic': ['"Bangers"', 'cursive'],
+                        'body': ['"Comic Neue"', 'cursive'],
+                        'code': ['"JetBrains Mono"', 'monospace'],
+                    },
+                    boxShadow: {
+                        'comic': '5px 5px 0px 0px #000000',
+                        'comic-hover': '2px 2px 0px 0px #000000',
+                        'comic-deep': '8px 8px 0px 0px #000000',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a; 
+            border-left: 2px solid black;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff00aa; 
+            border: 2px solid black;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f3ff;
+        }
+
+        /* Halftone Pattern Class */
+        .halftone {
+            background-image: radial-gradient(circle, #333 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .halftone-light {
+            background-image: radial-gradient(circle, #ddd 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Editor specific styling */
+        .code-input {
+            caret-color: #ffe600;
+            line-height: 1.5;
+        }
+        
+        /* Speech Bubble Tail */
+        .bubble-tail::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: black transparent;
+            display: block;
+            width: 0;
+        }
+
+        /* Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Hide scrollbar for code editor but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .tab-active {
+            background-color: #ffe600;
+            color: black;
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px 0px #000;
+        }
+    </style>
+</head>
+<body class="bg-comic-dark text-comic-white font-body overflow-x-hidden">
+
+    <!-- Navbar -->
+    <nav class="border-b-4 border-black bg-comic-gray p-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-comic-yellow text-black border-2 border-black p-1 transform -rotate-3 shadow-comic-hover">
+                    <i class="fas fa-code text-xl"></i>
+                </div>
+                <h1 class="font-comic text-3xl tracking-wide text-white uppercase drop-shadow-[2px_2px_0_#000]">
+                    Code<span class="text-comic-cyan">Comic</span> Lab
+                </h1>
+            </div>
+            
+            <div class="hidden md:flex gap-6 font-bold text-lg">
+                <a href="#editor" class="hover:text-comic-yellow transition-colors">Editor</a>
+                <a href="#templates" class="hover:text-comic-magenta transition-colors">Templates</a>
+                <a href="#about" class="hover:text-comic-cyan transition-colors">About</a>
+            </div>
+
+            <button onclick="toggleTheme()" class="bg-white text-black border-2 border-black px-3 py-1 shadow-comic hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold rounded-sm">
+                <i class="fas fa-sun"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative bg-comic-dark halftone py-12 md:py-20 border-b-4 border-black overflow-hidden">
+        <!-- Decoration Elements -->
+        <div class="absolute top-10 right-10 w-32 h-32 bg-comic-magenta rounded-full opacity-20 blur-xl"></div>
+        <div class="absolute bottom-10 left-10 w-40 h-40 bg-comic-cyan rounded-full opacity-20 blur-xl"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 text-center relative z-10">
+            <div class="inline-block bg-comic-yellow text-black font-bold px-4 py-1 border-2 border-black shadow-comic mb-4 transform -rotate-2">
+                BAM! POW! CODE!
+            </div>
+            <h2 class="font-comic text-5xl md:text-7xl mb-4 leading-tight">
+                WRITE CODE.<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-comic-cyan to-comic-magenta" style="-webkit-text-stroke: 1px black;">WATCH IT COME ALIVE.</span>
+            </h2>
+            <p class="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto mb-8 font-body">
+                A graphic novel inspired playground for your web experiments.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#editor" class="bg-comic-cyan text-black font-comic text-2xl px-8 py-3 border-2 border-black shadow-comic hover:shadow-comic-hover hover:translate-x-[3px] hover:translate-y-[3px] transition-all">
+                    START CODING
+                </a>
+                <button onclick="loadTemplate('game')" class="bg-transparent text-white font-comic text-2xl px-8 py-3 border-2 border-white hover:border-comic-magenta hover:text-comic-magenta border-dashed transition-all">
+                    TRY DEMO
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <main id="editor" class="max-w-7xl mx-auto px-2 md:px-4 py-8">
+        
+        <!-- Controls Bar -->
+        <div class="flex flex-wrap items-center justify-between mb-4 gap-4 bg-comic-gray p-3 border-2 border-black shadow-comic rounded-sm">
+            <div class="flex gap-2">
+                <div class="bg-red-500 w-4 h-4 rounded-full border border-black"></div>
+                <div class="bg-yellow-500 w-4 h-4 rounded-full border border-black"></div>
+                <div class="bg-green-500 w-4 h-4 rounded-full border border-black"></div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="resetEditor()" class="text-sm md:text-base font-bold text-red-400 hover:text-red-300 uppercase tracking-wider flex items-center gap-1">
+                    <i class="fas fa-trash"></i> Reset
+                </button>
+                <button onclick="downloadCode()" class="text-sm md:text-base font-bold text-comic-cyan hover:text-white uppercase tracking-wider flex items-center gap-1">
+                    <i class="fas fa-download"></i> Save
+                </button>
+                <button onclick="runCode()" class="bg-comic-yellow text-black font-comic text-xl px-6 py-1 border-2 border-black shadow-comic-hover hover:scale-105 transition-transform flex items-center gap-2">
+                    <i class="fas fa-play"></i> RUN
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Tabs (Visible only on small screens) -->
+        <div class="md:hidden flex mb-4 border-b-2 border-white/20">
+            <button onclick="switchMobileTab('html')" id="tab-html" class="flex-1 py-2 font-comic text-lg border-2 border-black bg-gray-700 text-white mr-1 tab-active">HTML</button>
+            <button onclick="switchMobileTab('css')" id="tab-css" class="flex-1 py-2 font-comic text-lg border-2 border-black bg-gray-700 text-white mr-1">CSS</button>
+            <button onclick="switchMobileTab('js')" id="tab-js" class="flex-1 py-2 font-comic text-lg border-2 border-black bg-gray-700 text-white mr-1">JS</button>
+            <button onclick="switchMobileTab('preview')" id="tab-preview" class="flex-1 py-2 font-comic text-lg border-2 border-black bg-gray-700 text-white">VIEW</button>
+        </div>
+
+        <!-- Editor & Preview Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 h-[85vh] md:h-[600px]">
+            
+            <!-- Left Side: Code Editors -->
+            <div class="md:col-span-5 flex flex-col gap-4 h-full relative">
+                
+                <!-- HTML Editor -->
+                <div id="panel-html" class="flex-1 flex flex-col border-2 border-black shadow-comic bg-gray-900 group transition-all hover:border-comic-cyan mobile-panel">
+                    <div class="bg-black text-comic-cyan px-3 py-1 font-comic text-lg border-b-2 border-black flex justify-between items-center">
+                        <span><i class="fab fa-html5 mr-2"></i>HTML</span>
+                        <span class="text-xs font-mono text-gray-500">index.html</span>
+                    </div>
+                    <textarea id="htmlCode" class="flex-1 w-full bg-[#1e1e1e] text-gray-300 p-3 font-code text-sm resize-none focus:outline-none focus:bg-[#252525]" placeholder="<!-- Write HTML here -->" spellcheck="false"></textarea>
+                </div>
+
+                <!-- CSS Editor -->
+                <div id="panel-css" class="flex-1 flex flex-col border-2 border-black shadow-comic bg-gray-900 group transition-all hover:border-comic-magenta hidden md:flex mobile-panel">
+                    <div class="bg-black text-comic-magenta px-3 py-1 font-comic text-lg border-b-2 border-black flex justify-between items-center">
+                        <span><i class="fab fa-css3-alt mr-2"></i>CSS</span>
+                        <span class="text-xs font-mono text-gray-500">style.css</span>
+                    </div>
+                    <textarea id="cssCode" class="flex-1 w-full bg-[#1e1e1e] text-gray-300 p-3 font-code text-sm resize-none focus:outline-none focus:bg-[#252525]" placeholder="/* Write CSS here */" spellcheck="false"></textarea>
+                </div>
+
+                <!-- JS Editor -->
+                <div id="panel-js" class="flex-1 flex flex-col border-2 border-black shadow-comic bg-gray-900 group transition-all hover:border-comic-yellow hidden md:flex mobile-panel">
+                    <div class="bg-black text-comic-yellow px-3 py-1 font-comic text-lg border-b-2 border-black flex justify-between items-center">
+                        <span><i class="fab fa-js mr-2"></i>JS</span>
+                        <span class="text-xs font-mono text-gray-500">script.js</span>
+                    </div>
+                    <textarea id="jsCode" class="flex-1 w-full bg-[#1e1e1e] text-gray-300 p-3 font-code text-sm resize-none focus:outline-none focus:bg-[#252525]" placeholder="// Write JavaScript here" spellcheck="false"></textarea>
+                </div>
+            </div>
+
+            <!-- Right Side: Preview & Console -->
+            <div id="panel-preview" class="md:col-span-7 flex flex-col gap-4 h-full hidden md:flex mobile-panel">
+                
+                <!-- Preview Frame -->
+                <div class="flex-[2] flex flex-col border-2 border-black shadow-comic-deep bg-white relative overflow-hidden">
+                    <div class="bg-black text-white px-3 py-1 font-comic text-lg border-b-2 border-black flex justify-between items-center">
+                        <span>LIVE ACTION</span>
+                        <div class="flex gap-1">
+                            <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                            <span class="text-xs font-mono uppercase">Live</span>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-full bg-checkered">
+                         <!-- Fallback/Loading bg -->
+                        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#000 1px, transparent 1px); background-size: 10px 10px;"></div>
+                        <iframe id="previewFrame" class="w-full h-full bg-white" sandbox="allow-scripts allow-modals"></iframe>
+                    </div>
+                    
+                    <!-- Comic Corner Decoration -->
+                    <div class="absolute bottom-0 right-0 w-0 h-0 border-b-[40px] border-r-[40px] border-b-black border-r-transparent transform rotate-180"></div>
+                </div>
+
+                <!-- Console Panel -->
+                <div class="flex-1 flex flex-col border-2 border-black shadow-comic bg-gray-900 overflow-hidden">
+                    <div class="bg-black text-white px-3 py-1 font-comic text-lg border-b-2 border-black flex justify-between items-center cursor-pointer" onclick="toggleConsole()">
+                        <span><i class="fas fa-terminal mr-2"></i>CONSOLE ZONE</span>
+                        <div class="flex gap-2 text-xs">
+                             <span id="log-count" class="text-green-400">0 logs</span>
+                             <span id="error-count" class="text-red-400">0 errs</span>
+                             <i class="fas fa-chevron-down transform transition-transform" id="console-chevron"></i>
+                        </div>
+                    </div>
+                    <div id="console-output" class="flex-1 overflow-y-auto p-2 font-code text-xs space-y-1 bg-[#121212]">
+                        <div class="text-gray-500 italic">System: Console ready. Waiting for output...</div>
+                    </div>
+                    <div class="bg-black p-1 flex justify-end">
+                        <button onclick="clearConsole()" class="text-xs text-white hover:text-red-400 font-bold px-2">CLEAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Templates Section -->
+    <section id="templates" class="py-16 bg-comic-white border-y-4 border-black halftone-light">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="font-comic text-5xl text-black mb-10 text-center drop-shadow-[2px_2px_0_rgba(0,0,0,1)]">
+                START FAST WITH TEMPLATES
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="bg-white border-2 border-black p-6 shadow-comic hover:-translate-y-2 transition-transform duration-200">
+                    <div class="w-12 h-12 bg-comic-cyan border-2 border-black rounded-full flex items-center justify-center mb-4 text-xl font-bold">1</div>
+                    <h3 class="font-comic text-2xl mb-2">Hello World Card</h3>
+                    <p class="font-body text-gray-700 mb-4 h-16">A styled component card with hover effects and a button. Good for layout practice.</p>
+                    <button onclick="loadTemplate('card')" class="w-full bg-black text-white font-bold py-2 border-2 border-black hover:bg-comic-cyan hover:text-black transition-colors">LOAD IT!</button>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white border-2 border-black p-6 shadow-comic hover:-translate-y-2 transition-transform duration-200">
+                    <div class="w-12 h-12 bg-comic-magenta border-2 border-black rounded-full flex items-center justify-center mb-4 text-xl font-bold">2</div>
+                    <h3 class="font-comic text-2xl mb-2">Neon Button</h3>
+                    <p class="font-body text-gray-700 mb-4 h-16">CSS animations and glow effects. Learn keyframes and psuedo-elements.</p>
+                    <button onclick="loadTemplate('neon')" class="w-full bg-black text-white font-bold py-2 border-2 border-black hover:bg-comic-magenta hover:text-black transition-colors">LOAD IT!</button>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white border-2 border-black p-6 shadow-comic hover:-translate-y-2 transition-transform duration-200">
+                    <div class="w-12 h-12 bg-comic-yellow border-2 border-black rounded-full flex items-center justify-center mb-4 text-xl font-bold">3</div>
+                    <h3 class="font-comic text-2xl mb-2">JS Clicker Game</h3>
+                    <p class="font-body text-gray-700 mb-4 h-16">Simple interaction logic. Click the target, increase score, update DOM.</p>
+                    <button onclick="loadTemplate('game')" class="w-full bg-black text-white font-bold py-2 border-2 border-black hover:bg-comic-yellow hover:text-black transition-colors">LOAD IT!</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About / Docs -->
+    <section id="about" class="py-16 bg-comic-dark text-white">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col md:flex-row gap-10 items-center">
+            <div class="flex-1">
+                <div class="relative bg-white text-black p-6 border-2 border-black rounded-xl bubble-tail mb-8 shadow-comic-hover">
+                    <p class="font-comic text-xl">"Hey there! This editor compiles your code instantly in the browser. No server required!"</p>
+                </div>
+                <h3 class="font-comic text-4xl mb-4 text-comic-yellow">QUICK TIPS</h3>
+                <ul class="space-y-3 font-body text-lg">
+                    <li class="flex items-center gap-2">
+                        <i class="fas fa-bolt text-comic-yellow"></i>
+                        <span>Hit <b>RUN</b> or Ctrl+Enter to update the preview.</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i class="fas fa-eye text-comic-cyan"></i>
+                        <span>Check the <b>Console Zone</b> for errors.</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i class="fas fa-mobile-alt text-comic-magenta"></i>
+                        <span>Use tabs on mobile to switch views.</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="flex-1 bg-comic-gray p-8 border-2 border-black shadow-comic relative">
+                <div class="absolute -top-3 -left-3 bg-comic-cyan text-black font-bold px-2 border border-black transform -rotate-6">ABOUT</div>
+                <h4 class="font-comic text-2xl mb-2">CodeComic Lab</h4>
+                <p class="text-gray-400 mb-4">Created for visual learners and graphic novel enthusiasts. This tool uses Vanilla JS to construct a Blob URL for the preview iframe, ensuring a secure sandbox.</p>
+                <div class="flex gap-4 text-2xl">
+                    <i class="fab fa-html5 hover:text-orange-500 cursor-pointer"></i>
+                    <i class="fab fa-css3 hover:text-blue-500 cursor-pointer"></i>
+                    <i class="fab fa-js hover:text-yellow-400 cursor-pointer"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black text-white py-8 border-t-4 border-comic-gray">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="font-comic text-xl">
+                CODE<span class="text-comic-yellow">COMIC</span> LAB &copy; 2023
+            </div>
+            <div class="text-sm text-gray-500">
+                Built with <i class="fas fa-heart text-red-500"></i> and Tailwind CSS
+            </div>
+            <div class="flex gap-6 text-2xl">
+                <a href="https://github.com/girishlade111" target="_blank" title="GitHub" class="hover:text-comic-yellow hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fab fa-github"></i></a>
+                <a href="https://www.linkedin.com/in/girish-lade-075bba201/" target="_blank" title="LinkedIn" class="hover:text-comic-cyan hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fab fa-linkedin"></i></a>
+                <a href="https://www.instagram.com/girish_lade_/" target="_blank" title="Instagram" class="hover:text-comic-magenta hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fab fa-instagram"></i></a>
+                <a href="https://codepen.io/Girish-Lade-the-looper" target="_blank" title="CodePen" class="hover:text-white hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fab fa-codepen"></i></a>
+                <a href="mailto:girishlade111@gmail.com" title="Email" class="hover:text-red-400 hover:-translate-y-1 hover:scale-110 transition-all transform duration-200"><i class="fas fa-envelope"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Logic -->
+    <script>
+        // DOM Elements
+        const htmlEditor = document.getElementById('htmlCode');
+        const cssEditor = document.getElementById('cssCode');
+        const jsEditor = document.getElementById('jsCode');
+        const previewFrame = document.getElementById('previewFrame');
+        const consoleOutput = document.getElementById('console-output');
+        const logCountSpan = document.getElementById('log-count');
+        const errCountSpan = document.getElementById('error-count');
+        
+        // Tab switching for mobile
+        function switchMobileTab(tabName) {
+            // Reset buttons
+            ['html', 'css', 'js', 'preview'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                btn.classList.remove('tab-active', 'bg-comic-yellow', 'text-black', 'shadow-none');
+                btn.classList.add('bg-gray-700', 'text-white');
+                btn.style.transform = 'translate(0,0)';
+                
+                const panel = document.getElementById(`panel-${t}`);
+                // On mobile, hide all first
+                if(window.innerWidth < 768) {
+                    panel.classList.add('hidden');
+                }
+            });
+
+            // Activate button
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.remove('bg-gray-700', 'text-white');
+            activeBtn.classList.add('tab-active');
+
+            // Show panel
+            const activePanel = document.getElementById(`panel-${tabName}`);
+            activePanel.classList.remove('hidden');
+            activePanel.classList.add('flex'); // Ensure flex is restored
+        }
+
+        // Initialize mobile state
+        function initMobile() {
+            if(window.innerWidth < 768) {
+                switchMobileTab('html');
+            } else {
+                // Desktop: Show all
+                document.querySelectorAll('.mobile-panel').forEach(el => {
+                    el.classList.remove('hidden');
+                    el.classList.add('flex');
+                });
+            }
+        }
+        window.addEventListener('resize', initMobile);
+
+        // Code Running Logic
+        function runCode() {
+            const html = htmlEditor.value;
+            const css = cssEditor.value;
+            const js = jsEditor.value;
+
+            // Console interception script
+            const consoleScript = `
+                <script>
+                    const originalLog = console.log;
+                    const originalError = console.error;
+                    const originalWarn = console.warn;
+                    
+                    function sendToParent(type, args) {
+                        try {
+                            const serializedArgs = args.map(arg => {
+                                if (typeof arg === 'object') {
+                                    try { return JSON.stringify(arg); } catch(e) { return arg.toString(); }
+                                }
+                                return String(arg);
+                            });
+                            window.parent.postMessage({ type: 'console', level: type, args: serializedArgs }, '*');
+                        } catch(e) {
+                            // Silent fail
+                        }
+                    }
+
+                    console.log = function(...args) {
+                        sendToParent('log', args);
+                        originalLog.apply(console, args);
+                    };
+                    console.error = function(...args) {
+                        sendToParent('error', args);
+                        originalError.apply(console, args);
+                    };
+                    console.warn = function(...args) {
+                        sendToParent('warn', args);
+                        originalWarn.apply(console, args);
+                    };
+                    window.onerror = function(msg, source, lineno, colno, error) {
+                        sendToParent('error', [msg + ' (Line: ' + lineno + ')']);
+                    };
+                <\/script>
+            `;
+
+            const source = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: sans-serif; padding: 10px; margin: 0; }
+                        ${css}
+                    </style>
+                    ${consoleScript}
+                </head>
+                <body>
+                    ${html}
+                    <script>
+                        try {
+                            ${js}
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            previewFrame.srcdoc = source;
+            
+            // Add visual feedback to button
+            const btn = document.querySelector('button[onclick="runCode()"]');
+            btn.classList.add('scale-95');
+            setTimeout(() => btn.classList.remove('scale-95'), 100);
+        }
+
+        // Console Handling
+        let logCount = 0;
+        let errCount = 0;
+
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'console') {
+                const { level, args } = event.data;
+                const row = document.createElement('div');
+                
+                let colorClass = 'text-green-400';
+                let icon = '<i class="fas fa-check-circle text-[10px] opacity-50 mr-2"></i>';
+                
+                if (level === 'error') {
+                    colorClass = 'text-red-400 font-bold';
+                    icon = '<i class="fas fa-exclamation-triangle text-[10px] mr-2"></i>';
+                    errCount++;
+                } else if (level === 'warn') {
+                    colorClass = 'text-yellow-400';
+                    icon = '<i class="fas fa-exclamation-circle text-[10px] mr-2"></i>';
+                } else {
+                    logCount++;
+                }
+
+                // Update counters
+                logCountSpan.textContent = `${logCount} logs`;
+                errCountSpan.textContent = `${errCount} errs`;
+
+                row.className = `border-b border-gray-800 pb-1 break-words font-mono ${colorClass}`;
+                row.innerHTML = `${icon}<span>${args.join(' ')}</span>`;
+                consoleOutput.appendChild(row);
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            }
+        });
+
+        function clearConsole() {
+            consoleOutput.innerHTML = '<div class="text-gray-500 italic">System: Console cleared.</div>';
+            logCount = 0;
+            errCount = 0;
+            logCountSpan.textContent = '0 logs';
+            errCountSpan.textContent = '0 errs';
+        }
+
+        function toggleConsole() {
+            const chevron = document.getElementById('console-chevron');
+            // Logic to minimize/maximize could go here, for now just rotate icon
+            chevron.classList.toggle('rotate-180');
+        }
+
+        // Templates Data
+        const templates = {
+            card: {
+                html: `<div class="card">\n  <div class="image"></div>\n  <h2>Comic Hero</h2>\n  <p>The savior of clean code.</p>\n  <button>Contact</button>\n</div>`,
+                css: `.card {\n  border: 4px solid black;\n  padding: 20px;\n  width: 250px;\n  box-shadow: 8px 8px 0 #000;\n  background: white;\n  text-align: center;\n  transition: transform 0.2s;\n}\n\n.card:hover {\n  transform: translate(-4px, -4px);\n  box-shadow: 12px 12px 0 #00f3ff;\n}\n\n.image {\n  width: 100%;\n  height: 120px;\n  background: radial-gradient(circle, #ff00aa 20%, transparent 20%), #222;\n  background-size: 10px 10px;\n  margin-bottom: 15px;\n  border: 2px solid black;\n}\n\nh2 { font-family: sans-serif; text-transform: uppercase; margin: 0; }\nbutton { margin-top: 10px; background: #ffe600; border: 2px solid black; padding: 5px 15px; font-weight: bold; cursor: pointer; }`,
+                js: `const btn = document.querySelector('button');\n\nbtn.addEventListener('click', () => {\n  btn.innerText = "Sent!";\n  btn.style.backgroundColor = "#00f3ff";\n  console.log("Message sent to hero!");\n});`
+            },
+            neon: {
+                html: `<div class="container">\n  <h1 class="neon-text">CYBER<br>PUNK</h1>\n</div>`,
+                css: `body { background: #050505; display: flex; align-items: center; justify-content: center; height: 100vh; }\n\n.neon-text {\n  font-family: sans-serif;\n  font-size: 80px;\n  font-weight: bold;\n  color: #fff;\n  text-align: center;\n  line-height: 0.8;\n  text-shadow:\n    0 0 7px #fff,\n    0 0 10px #fff,\n    0 0 21px #fff,\n    0 0 42px #0fa,\n    0 0 82px #0fa,\n    0 0 92px #0fa,\n    0 0 102px #0fa,\n    0 0 151px #0fa;\n  animation: flicker 1.5s infinite alternate;\n}\n\n@keyframes flicker {\n  0%, 18%, 22%, 25%, 53%, 57%, 100% {\n    text-shadow:\n    0 0 4px #fff,\n    0 0 11px #fff,\n    0 0 19px #fff,\n    0 0 40px #0fa,\n    0 0 80px #0fa,\n    0 0 90px #0fa,\n    0 0 100px #0fa,\n    0 0 150px #0fa;\n  }\n  20%, 24%, 55% {        \n    text-shadow: none;\n  }\n}`,
+                js: `console.log("Neon system initialized...");\nconsole.warn("Voltage high!");`
+            },
+            game: {
+                html: `<div id="game-area">\n  <div id="score">Score: 0</div>\n  <div id="target"></div>\n</div>`,
+                css: `#game-area {\n  position: relative;\n  width: 100%;\n  height: 300px;\n  border: 2px solid black;\n  background: #f0f0f0;\n  overflow: hidden;\n}\n\n#score {\n  position: absolute;\n  top: 10px;\n  left: 10px;\n  font-family: monospace;\n  font-size: 20px;\n  font-weight: bold;\n}\n\n#target {\n  width: 40px;\n  height: 40px;\n  background: #ff00aa;\n  border: 3px solid black;\n  border-radius: 50%;\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  cursor: crosshair;\n  transition: transform 0.1s;\n}\n#target:active { transform: scale(0.9); }`,
+                js: `let score = 0;\nconst target = document.getElementById('target');\nconst scoreEl = document.getElementById('score');\nconst area = document.getElementById('game-area');\n\ntarget.addEventListener('click', () => {\n  score++;\n  scoreEl.innerText = 'Score: ' + score;\n  moveTarget();\n  console.log("Hit! Score: " + score);\n});\n\nfunction moveTarget() {\n  const x = Math.random() * (area.clientWidth - 50);\n  const y = Math.random() * (area.clientHeight - 50);\n  target.style.left = x + 'px';\n  target.style.top = y + 'px';\n}\n\nconsole.log("Game Loaded. Click the pink dot!");`
+            }
+        };
+
+        function loadTemplate(name) {
+            const t = templates[name];
+            if(t) {
+                htmlEditor.value = t.html;
+                cssEditor.value = t.css;
+                jsEditor.value = t.js;
+                runCode();
+                // Scroll to editor
+                document.getElementById('editor').scrollIntoView({behavior: 'smooth'});
+            }
+        }
+
+        function resetEditor() {
+            if(confirm("Are you sure you want to clear the editor?")) {
+                htmlEditor.value = '';
+                cssEditor.value = '';
+                jsEditor.value = '';
+                previewFrame.srcdoc = '';
+                clearConsole();
+            }
+        }
+
+        function downloadCode() {
+            const html = `<!DOCTYPE html>\n<html>\n<head>\n<style>\n${cssEditor.value}\n</style>\n</head>\n<body>\n${htmlEditor.value}\n<script>\n${jsEditor.value}\n<\/script>\n</body>\n</html>`;
+            const blob = new Blob([html], {type: 'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'codecomic-project.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Support Tab key in textareas
+        function enableTab(el) {
+            el.addEventListener('keydown', function(e) {
+                if (e.key == 'Tab') {
+                    e.preventDefault();
+                    var start = this.selectionStart;
+                    var end = this.selectionEnd;
+                    this.value = this.value.substring(0, start) +
+                        "  " + this.value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + 2;
+                }
+                // Ctrl+Enter to run
+                if (e.ctrlKey && e.key === 'Enter') {
+                    runCode();
+                }
+            });
+        }
+
+        [htmlEditor, cssEditor, jsEditor].forEach(enableTab);
+
+        // Theme Toggle (Simple implementation)
+        function toggleTheme() {
+            // This is a placeholder for a more complex theme logic.
+            // Currently flips filter or alerts.
+            document.body.classList.toggle('invert');
+            document.body.classList.toggle('hue-rotate-180');
+            // Fix images/iframes from being inverted double
+            previewFrame.classList.toggle('invert');
+            previewFrame.classList.toggle('hue-rotate-180');
+        }
+
+        // Init
+        initMobile();
+        // Load default simple state
+        htmlEditor.value = "<h1>Hello CodeComic!</h1>\n<p>Edit me on the left.</p>";
+        cssEditor.value = "body { color: #333; font-family: sans-serif; padding: 20px; } \nh1 { color: #ff00aa; text-decoration: underline; }";
+        jsEditor.value = "console.log('Welcome to the lab!');";
+        runCode();
+
+    </script>
+</body>
+</html>
